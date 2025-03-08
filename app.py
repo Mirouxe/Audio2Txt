@@ -1,5 +1,6 @@
 import os
 import whisper
+import gc  # Ajout du garbage collector pour libérer la mémoire
 from flask import Flask, render_template, request, send_file, redirect, url_for, jsonify, session
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
@@ -12,9 +13,10 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', 'uploads')
 app.config['ALLOWED_EXTENSIONS'] = {'mp3', 'wav', 'm4a', 'ogg', 'flac'}
-app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16 MB par défaut
+app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024))  # 5 MB par défaut
 app.secret_key = os.environ.get('SECRET_KEY', 'transcription_app_secret_key')
-app.config['WHISPER_MODEL'] = os.environ.get('WHISPER_MODEL', 'base')  # Modèle Whisper à utiliser
+app.config['WHISPER_MODEL'] = os.environ.get('WHISPER_MODEL', 'tiny')  # Modèle Whisper à utiliser (tiny par défaut)
+app.config['MAX_AUDIO_DURATION'] = int(os.environ.get('MAX_AUDIO_DURATION', 120))  # Durée maximale en secondes
 
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -43,10 +45,25 @@ def write_text_with_line_breaks(text, filepath, line_length=100):
         if current_line:
             f.write(current_line + '\n')
 
+def check_audio_duration(audio_file):
+    """Vérifie la durée d'un fichier audio et retourne True si elle est acceptable."""
+    try:
+        audio = AudioSegment.from_file(audio_file)
+        duration_seconds = len(audio) / 1000  # Convertir millisecondes en secondes
+        return duration_seconds <= app.config['MAX_AUDIO_DURATION']
+    except Exception:
+        # En cas d'erreur, on suppose que le fichier est valide
+        # et on laisse le traitement principal gérer les erreurs
+        return True
+
 def audio2txt_thread(audio_path, task_id, original_filename):
     try:
         # Mettre à jour le statut de la tâche
         transcription_tasks[task_id]['status'] = 'processing'
+        
+        # Vérifier la durée de l'audio
+        if not check_audio_duration(audio_path):
+            raise ValueError(f"Le fichier audio dépasse la durée maximale autorisée de {app.config['MAX_AUDIO_DURATION']} secondes")
         
         # Générer un nom de fichier unique pour éviter les collisions
         unique_id = str(uuid.uuid4())
@@ -66,6 +83,10 @@ def audio2txt_thread(audio_path, task_id, original_filename):
         model = whisper.load_model(app.config['WHISPER_MODEL'])
         result = model.transcribe(audio_file_for_whisper)
         text = str(result["text"])
+        
+        # Libérer la mémoire explicitement
+        del model
+        gc.collect()
         
         # Écrire le texte dans un fichier
         write_text_with_line_breaks(text, txt_path)

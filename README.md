@@ -12,7 +12,7 @@ Cette application web permet de télécharger un fichier audio et de le transcri
 
 ## Déploiement sur Render
 
-Cette application est configurée pour être déployée facilement sur [Render](https://render.com/).
+Cette application est optimisée pour être déployée sur [Render](https://render.com/).
 
 ### Étapes de déploiement
 
@@ -27,8 +27,25 @@ Cette application est configurée pour être déployée facilement sur [Render](
    - `FLASK_APP=app.py`
    - `FLASK_ENV=production`
    - `WHISPER_MODEL=tiny`
-   - `MAX_CONTENT_LENGTH=5242880`
+   - `MAX_CONTENT_LENGTH=2097152`
+   - `MAX_AUDIO_DURATION=60`
    - `SECRET_KEY=votre_clé_secrète`
+
+## Optimisations pour Render
+
+Cette application a été spécialement optimisée pour fonctionner sur le plan gratuit de Render :
+
+1. **Modèle Whisper "tiny"** : Utilisation du modèle le plus léger pour économiser la mémoire
+2. **Limitation de la taille des fichiers** : Maximum 2 Mo pour éviter les problèmes de mémoire
+3. **Limitation de la durée audio** : Maximum 60 secondes pour éviter les timeouts
+4. **Gestion optimisée de la mémoire** : Libération explicite de la mémoire après chaque transcription
+5. **Installation automatique de FFmpeg** : Via le fichier `apt-packages.txt`
+
+## Limitations du plan gratuit de Render
+
+- **Mise en veille** : L'application se met en veille après 15 minutes d'inactivité
+- **Temps de démarrage** : Le premier accès après une période d'inactivité peut prendre 30-60 secondes
+- **Ressources limitées** : 512 Mo de RAM, ce qui explique les limitations de taille et de durée des fichiers
 
 ## Développement local
 
@@ -50,12 +67,6 @@ Cette application est configurée pour être déployée facilement sur [Render](
 
 1. Lancez l'application : `python app.py`
 2. Ouvrez votre navigateur à l'adresse : http://127.0.0.1:5000
-
-## Limitations
-
-- La taille maximale du fichier est limitée à 5 Mo par défaut
-- Le modèle Whisper "tiny" est utilisé par défaut pour économiser les ressources
-- Sur le plan gratuit de Render, l'application se met en veille après 15 minutes d'inactivité
 
 ## Configuration
 
