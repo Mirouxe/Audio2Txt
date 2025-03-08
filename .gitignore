@@ -1,0 +1,25 @@
+# Environnement virtuel
+venv/
+env/
+ENV/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers de distribution
+dist/
+build/
+*.egg-info/
+
+# Fichiers de configuration locaux
+.env
+
+# Fichiers temporaires
+uploads/*
+!uploads/.gitkeep
+
+# Fichiers système
+.DS_Store
+Thumbs.db 

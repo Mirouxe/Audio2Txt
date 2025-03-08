@@ -1,0 +1,21 @@
+services:
+  # Service web pour l'application de transcription audio
+  - type: web
+    name: transcription-audio
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    plan: free
+    envVars:
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
+      - key: WHISPER_MODEL
+        value: tiny
+      - key: MAX_CONTENT_LENGTH
+        value: 5242880
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.9.16 

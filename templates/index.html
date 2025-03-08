@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcription Audio en Texte</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+        }
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .file-input-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .file-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #3498db;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            text-align: center;
+        }
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .submit-btn:hover {
+            background-color: #2980b9;
+        }
+        .info-box {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        .tasks-container {
+            margin-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .task-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        .task-item.completed {
+            border-left-color: #2ecc71;
+        }
+        .task-item.error {
+            border-left-color: #e74c3c;
+        }
+        .task-info {
+            flex: 1;
+        }
+        .task-filename {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .task-status {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        .task-actions {
+            margin-left: 15px;
+        }
+        .download-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .download-btn:hover {
+            background-color: #27ae60;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .no-tasks {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .alert {
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Transcription Audio en Texte</h1>
+        
+        <div id="alertContainer" class="alert"></div>
+        
+        <form class="upload-form" id="uploadForm">
+            <div class="file-input-container">
+                <input type="file" name="file" id="fileInput" class="file-input" accept=".mp3,.wav,.m4a,.ogg,.flac" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">Transcrire l'audio</button>
+        </form>
+        
+        <div class="info-box">
+            <h3>Comment ça marche ?</h3>
+            <p>1. Sélectionnez un fichier audio (MP3, WAV, M4A, OGG ou FLAC)</p>
+            <p>2. Cliquez sur "Transcrire l'audio"</p>
+            <p>3. Vous pouvez lancer plusieurs transcriptions en même temps</p>
+            <p>4. Une fois la transcription terminée, cliquez sur "Télécharger" pour récupérer le fichier texte</p>
+            <p><strong>Note:</strong> La taille maximale du fichier est de 16 Mo. La transcription peut prendre du temps selon la durée de l'audio.</p>
+        </div>
+        
+        <div class="tasks-container">
+            <h2>Vos transcriptions</h2>
+            <div id="taskList" class="task-list">
+                <div class="no-tasks">Aucune transcription en cours</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Objet pour stocker les tâches
+        const tasks = {};
+        
+        // Fonction pour afficher une alerte
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.textContent = message;
+            alertContainer.className = `alert alert-${type}`;
+            alertContainer.style.display = 'block';
+            
+            // Masquer l'alerte après 5 secondes
+            setTimeout(() => {
+                alertContainer.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Fonction pour mettre à jour l'affichage des tâches
+        function updateTaskList() {
+            const taskListElement = document.getElementById('taskList');
+            
+            // Vider la liste
+            taskListElement.innerHTML = '';
+            
+            // Vérifier s'il y a des tâches
+            if (Object.keys(tasks).length === 0) {
+                taskListElement.innerHTML = '<div class="no-tasks">Aucune transcription en cours</div>';
+                return;
+            }
+            
+            // Ajouter chaque tâche à la liste
+            for (const [taskId, task] of Object.entries(tasks)) {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.status}`;
+                taskElement.id = `task-${taskId}`;
+                
+                let statusText = '';
+                let statusIcon = '';
+                
+                switch (task.status) {
+                    case 'queued':
+                        statusText = 'En attente';
+                        statusIcon = '<div class="spinner"></div>';
+                        break;
+                    case 'processing':
+                        statusText = 'Transcription en cours';
+                        statusIcon = '<div class="spinner"></div>';
+                        break;
+                    case 'completed':
+                        statusText = 'Transcription terminée';
+                        statusIcon = '';
+                        break;
+                    case 'error':
+                        statusText = `Erreur: ${task.errorMessage || 'Une erreur est survenue'}`;
+                        statusIcon = '';
+                        break;
+                }
+                
+                let actionButton = '';
+                if (task.status === 'completed') {
+                    actionButton = `<button class="download-btn" onclick="downloadTranscription('${taskId}')">Télécharger</button>`;
+                }
+                
+                taskElement.innerHTML = `
+                    <div class="task-info">
+                        <div class="task-filename">${task.filename}</div>
+                        <div class="task-status">${statusIcon}${statusText}</div>
+                    </div>
+                    <div class="task-actions">
+                        ${actionButton}
+                    </div>
+                `;
+                
+                taskListElement.appendChild(taskElement);
+            }
+        }
+        
+        // Fonction pour vérifier le statut d'une tâche
+        function checkTaskStatus(taskId) {
+            fetch(`/task_status/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Mettre à jour le statut de la tâche
+                    tasks[taskId].status = data.status;
+                    
+                    if (data.status === 'completed') {
+                        tasks[taskId].downloadUrl = data.download_url;
+                        showAlert(`La transcription de "${tasks[taskId].filename}" est terminée !`, 'success');
+                    } else if (data.status === 'error') {
+                        tasks[taskId].errorMessage = data.message;
+                        showAlert(`Erreur lors de la transcription de "${tasks[taskId].filename}": ${data.message}`, 'error');
+                    }
+                    
+                    // Mettre à jour l'affichage
+                    updateTaskList();
+                    
+                    // Continuer à vérifier si la tâche est toujours en cours
+                    if (data.status === 'queued' || data.status === 'processing') {
+                        setTimeout(() => checkTaskStatus(taskId), 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la vérification du statut:', error);
+                });
+        }
+        
+        // Fonction pour télécharger une transcription
+        function downloadTranscription(taskId) {
+            if (tasks[taskId] && tasks[taskId].downloadUrl) {
+                window.location.href = tasks[taskId].downloadUrl;
+            }
+        }
+        
+        // Gestionnaire d'événement pour le formulaire
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) {
+                showAlert('Veuillez sélectionner un fichier audio', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Désactiver le bouton pendant l'envoi
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Envoi en cours...';
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Réactiver le bouton
+                submitButton.disabled = false;
+                submitButton.textContent = 'Transcrire l\'audio';
+                
+                if (data.status === 'success') {
+                    // Réinitialiser le formulaire
+                    fileInput.value = '';
+                    
+                    // Ajouter la tâche à la liste
+                    const taskId = data.task_id;
+                    tasks[taskId] = {
+                        id: taskId,
+                        filename: file.name,
+                        status: 'queued'
+                    };
+                    
+                    // Mettre à jour l'affichage
+                    updateTaskList();
+                    
+                    // Commencer à vérifier le statut
+                    checkTaskStatus(taskId);
+                    
+                    showAlert('Fichier téléchargé avec succès, transcription en cours', 'success');
+                } else {
+                    showAlert(data.message || 'Une erreur est survenue', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'envoi du fichier:', error);
+                submitButton.disabled = false;
+                submitButton.textContent = 'Transcrire l\'audio';
+                showAlert('Erreur lors de l\'envoi du fichier', 'error');
+            });
+        });
+        
+        // Charger les tâches existantes au chargement de la page
+        window.addEventListener('load', function() {
+            fetch('/tasks')
+                .then(response => response.json())
+                .then(data => {
+                    // Ajouter les tâches existantes
+                    for (const [taskId, task] of Object.entries(data)) {
+                        tasks[taskId] = {
+                            id: taskId,
+                            filename: task.filename,
+                            status: task.status
+                        };
+                        
+                        // Vérifier le statut des tâches en cours
+                        if (task.status === 'queued' || task.status === 'processing') {
+                            checkTaskStatus(taskId);
+                        } else if (task.status === 'completed') {
+                            // Récupérer l'URL de téléchargement
+                            fetch(`/task_status/${taskId}`)
+                                .then(response => response.json())
+                                .then(statusData => {
+                                    if (statusData.status === 'completed') {
+                                        tasks[taskId].downloadUrl = statusData.download_url;
+                                        updateTaskList();
+                                    }
+                                });
+                        }
+                    }
+                    
+                    // Mettre à jour l'affichage
+                    updateTaskList();
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des tâches:', error);
+                });
+        });
+    </script>
+</body>
+</html> 
