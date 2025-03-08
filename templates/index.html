@@ -162,6 +162,11 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .limitations {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #e74c3c;
+        }
     </style>
 </head>
 <body>
@@ -184,7 +189,14 @@
             <p>2. Cliquez sur "Transcrire l'audio"</p>
             <p>3. Vous pouvez lancer plusieurs transcriptions en même temps</p>
             <p>4. Une fois la transcription terminée, cliquez sur "Télécharger" pour récupérer le fichier texte</p>
-            <p><strong>Note:</strong> La taille maximale du fichier est de 16 Mo. La transcription peut prendre du temps selon la durée de l'audio.</p>
+            <div class="limitations">
+                <p><strong>Limitations :</strong></p>
+                <ul>
+                    <li>Taille maximale du fichier : 2 Mo</li>
+                    <li>Durée maximale de l'audio : 60 secondes</li>
+                    <li>Premier chargement après inactivité : 30-60 secondes</li>
+                </ul>
+            </div>
         </div>
         
         <div class="tasks-container">
@@ -319,6 +331,13 @@
             }
             
             const file = fileInput.files[0];
+            
+            // Vérifier la taille du fichier (max 2 Mo)
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('Le fichier est trop volumineux. La taille maximale est de 2 Mo.', 'error');
+                return;
+            }
+            
             const formData = new FormData();
             formData.append('file', file);
             
